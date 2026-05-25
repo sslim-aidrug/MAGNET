@@ -71,10 +71,6 @@ and the **ZINC250K** subset of ZINC (via the Junction-Tree VAE repository,
 <https://github.com/wengong-jin/icml18-jtnn>). See `data/raw/README.md` for
 provenance.
 
-Processed meta-graphs, splits, and checkpoints are **large and not tracked in
-git** — they are regenerated from the raw CSVs by the pipeline below and written
-to `data/metagraphs/`, `data/splits/`, and `pretrain_model/`.
-
 ---
 
 ## Run
@@ -83,13 +79,13 @@ The pipeline runs in four numbered steps (`scripts/`). Pass a GPU index as the
 first argument.
 
 ```bash
-# 1) Build 933D meta-graphs from the raw CSVs (ZINC250K + 10 benchmarks)
+# 1) Build meta-graphs from the raw CSVs 
 bash scripts/step1_build_metagraphs.sh 0
 
-# 2) Generate train/val/test splits (8:1:1, random + balanced-scaffold, seeds 42-46)
+# 2) Generate train/val/test splits 
 bash scripts/step2_generate_splits.sh
 
-# 3) Pre-train the GraphGPS encoder on ZINC250K (multi-objective loss)
+# 3) Pre-train the GraphGPS encoder on ZINC250K 
 bash scripts/step3_pretrain.sh 0
 #    -> pretrain_model/pretrained_gps.pt
 
@@ -97,19 +93,6 @@ bash scripts/step3_pretrain.sh 0
 bash scripts/step4_finetune.sh 0 bbbp
 #    DATASET in {bbbp, bace, hiv, sider, clintox, tox21, toxcast, esol, freesolv, lipo}
 ```
-
-Results are reported as **mean ± standard deviation over 5 seeds**. The main
-paper table uses the **random** split; **scaffold**-split results are in the
-Supplementary. Per-dataset hyperparameters are listed in the Supplementary
-(Hyperparameters table); `step4_finetune.sh` ships with BBBP's optimal values
-as an example.
-
-Key options (see `magnet/conf.py`): `--pre-epochs`, `--pre-lr`,
-`--pre-batch-size`, `--node-mask-ratio`, the loss weights `--fg-weight` (α),
-`--property-weight` (β), `--smiles-graph-weight` (γ); and for fine-tuning
-`--split-type {random,scaffold}`, `--dataset-name`, `--finetuning-lr`,
-`--dropout`, `--smiles-proj-dim`, `--gps-lr-ratio`, `--pretrained-path`,
-`--runs`.
 
 ---
 
@@ -123,14 +106,14 @@ MAGNET/
 │   ├── metagraph/                   #   ── core: meta-graph construction ──
 │   │   ├── fragmentation.py         #     BRICS / JT / Murcko fragmentation
 │   │   ├── graph_builder.py         #     meta-graph assembly + preprocessing pipeline
-│   │   ├── node_features.py         #     933D node features (549D RDKit + 384D ChemBERTa)
+│   │   ├── node_features.py         #     node features
 │   │   └── pos_encoding.py          #     positional / structural encodings
 │   ├── pretrain.py                  #   multi-objective pre-training on ZINC250K
 │   ├── finetune.py                  #   fine-tuning + multi-seed evaluation
 │   └── data_preprocessing/          #   ── data preprocessing ──
-│       ├── random_split.py          #     stratified random 8:1:1 split
-│       └── scaffold_split.py        #     balanced scaffold 8:1:1 split
-├── scripts/                         # step1-4 pipeline (numbered by order)
+│       ├── random_split.py          #     random split
+│       └── scaffold_split.py        #     scaffold split
+├── scripts/                         # step1-4 pipeline 
 │   ├── step1_build_metagraphs.sh
 │   ├── step2_generate_splits.sh
 │   ├── step3_pretrain.sh
