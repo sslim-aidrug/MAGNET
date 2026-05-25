@@ -1,0 +1,28 @@
+# MAGNET — Python dependencies (tested with Python 3.10)
+#
+# torch and torch-scatter must match your CUDA toolkit. The paper used
+# torch 2.11.0 built for CUDA 12.8. Install PyTorch first (https://pytorch.org),
+# then install torch-scatter from the matching PyG wheel index, e.g.:
+#   pip install torch-scatter==2.1.2 -f https://data.pyg.org/whl/torch-2.11.0+cu128.html
+# Finally: pip install -r requirements.txt
+# (Only direct dependencies are listed; transitive packages such as
+#  huggingface-hub, tokenizers and safetensors install automatically.)
+
+torch==2.11.0
+torch-geometric==2.7.0
+torch-scatter==2.1.2
+transformers==4.50.3
+rdkit==2026.3.1
+numpy==1.26.4
+scipy==1.15.3
+scikit-learn==1.7.2
+pandas==2.3.3
+networkx==3.4.2
+tqdm==4.67.3
+
+# Optional — only needed for the interpretability / analysis figures
+# (cross-view consensus, attention visualisation, embedding projections):
+# matplotlib
+# seaborn
+# umap-learn
+# PyTDC

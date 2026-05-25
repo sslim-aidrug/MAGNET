@@ -1,0 +1,24 @@
+# Processed graphs, model checkpoints, logs (kept out of version control).
+# Raw input CSVs under data/raw/ ARE tracked; everything else under data/ is not.
+data/*
+!data/raw/
+pretrain_model/
+ablation_study/
+logs/
+*.pkl
+*.pt
+*.npz
+*.ckpt
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+.venv/
+env/
+
+# OS / editor
+.DS_Store
+*.swp
