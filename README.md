@@ -1,6 +1,6 @@
 <div align="center">
 
-# MAGNET
+# Cross-view molecular graph learning enables interpretable ADMET prediction.
 
 **M**ulti-view **A**ggregation of **G**raphs for **N**eural **E**mbedding of **T**opologies
 
@@ -10,11 +10,6 @@ cross-view meta-graph construction, multi-objective self-supervised
 pre-training, and ChemBERTa-augmented fine-tuning.*
 
 </div>
-
----
-
-This repository accompanies the paper
-**"Cross-view molecular graph learning enables interpretable ADMET prediction."**
 
 ## Overview
 
