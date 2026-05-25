@@ -142,18 +142,6 @@ MAGNET/
 
 ---
 
-## Citation
-
-```bibtex
-@article{mo2026magnet,
-  title   = {Cross-view molecular graph learning enables interpretable ADMET prediction},
-  author  = {Mo, Juhyeon and Lee, Myungjin and Lee, Seungyeon and Lim, Sangsoo},
-  journal = {Nature Communications},
-  year    = {2026},
-  note    = {Under review}
-}
-```
-
 ## Contact
 
 Corresponding author: Sangsoo Lim (`sslim@dgu.ac.kr`), Department of Computer
