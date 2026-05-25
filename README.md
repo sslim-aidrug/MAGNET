@@ -122,10 +122,3 @@ MAGNET/
 ├── requirements.txt
 └── README.md
 ```
-
----
-
-## Contact
-
-Corresponding author: Sangsoo Lim (`sslim@dgu.ac.kr`), Department of Computer
-Science and Artificial Intelligence, Dongguk University.
