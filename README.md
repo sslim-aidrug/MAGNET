@@ -1,146 +1,149 @@
+<div align="center">
+
 # MAGNET
 
-**Multi-view Aggregation of Graphs for Neural Embedding of Topologies** — a multi-view molecular graph learning framework for accurate and interpretable ADMET property prediction.
+**M**ulti-view **A**ggregation of **G**raphs for **N**eural **E**mbedding of **T**opologies
 
-MAGNET represents each molecule as a unified **meta-graph** built from three complementary fragmentations — **BRICS**, **Junction Tree (JT)**, and **Murcko scaffold** — and connects overlapping fragments across views through atom-overlap edges. This enables cross-view message passing between chemically distinct but structurally related substructures. A multi-objective self-supervised pre-training strategy (graph–graph contrastive learning, molecular descriptor regression, and SMILES–graph alignment) yields transferable embeddings that are fine-tuned for downstream property prediction.
+*A multi-view molecular graph learning framework for interpretable ADMET
+prediction — combining BRICS / Junction-Tree / Murcko fragmentation,
+cross-view meta-graph construction, multi-objective self-supervised
+pre-training, and ChemBERTa-augmented fine-tuning.*
 
-This repository accompanies the paper *"Cross-view molecular graph learning enables interpretable ADMET prediction."*
+</div>
 
 ---
+
+This repository accompanies the paper
+**"Cross-view molecular graph learning enables interpretable ADMET prediction."**
 
 ## Overview
 
-MAGNET runs in three stages (see Fig. 1 of the paper):
-
-1. **Molecular fragmentation** — each molecule is decomposed with BRICS, JT, and Murcko scaffold.
-2. **Meta-graph construction** — fragments from the three views are merged by atom-index identity and connected by atom-overlap edges (cross-view only; self-loops excluded), forming a single tree-like meta-graph.
-3. **Pre-training & fine-tuning** — the meta-graph is encoded by a GraphGPS transformer (local MPNN + global multi-head self-attention) and pre-trained with the multi-objective loss
-
-   ```
-   L = α · L_GG  +  β · L_P  +  γ · L_SG
-   ```
-
-   where `L_GG` is an InfoNCE graph–graph contrastive loss over two node-masked views, `L_P` regresses normalized RDKit descriptors, and `L_SG` is a cross-modal alignment between the graph embedding and a frozen ChemBERTa embedding. The pre-trained encoder is then fine-tuned, combining graph embeddings with ChemBERTa SMILES features.
-
----
-
-## Repository layout
-
-```
-MAGNET/
-├── magnet/                              # Python package (run modules with `python -m magnet.<module>`)
-│   ├── conf.py                          # Argument / path configuration (--base-dir or $MAGNET_BASE_DIR)
-│   ├── gps_model.py                     # GraphGPS encoder (FragmentGPS) + projection heads
-│   ├── metagraph/                       # ── Core: meta-graph construction ──
-│   │   ├── fragmentation.py             #    BRICS / JT / Murcko fragmentation
-│   │   ├── graph_builder.py             #    meta-graph assembly + preprocessing pipeline
-│   │   ├── node_features.py             #    node features: 549D RDKit + 384D ChemBERTa = 933D
-│   │   └── pos_encoding.py              #    positional / structural encodings
-│   ├── pretrain.py                      # Multi-objective pre-training on ZINC250K
-│   ├── finetune.py                      # Fine-tuning + multi-seed evaluation on ADMET benchmarks
-│   └── data_preprocessing/              # ── Data preprocessing ──
-│       ├── random_split.py              #    random 8:1:1 split index generation
-│       └── scaffold_split.py            #    balanced scaffold split index generation
-├── data/
-│   └── raw/                             # Raw input CSVs (tracked); processed graphs are gitignored
-│       ├── zinc250k.csv                 #   pre-training corpus (~250K molecules)
-│       └── moleculenet/                 #   10 downstream ADMET benchmark CSVs
-├── scripts/                            # numbered by pipeline order
-│   ├── step1_build_metagraphs.sh        # Build 933D meta-graphs from raw CSVs
-│   ├── step2_generate_splits.sh         # Generate all splits (10 datasets, seeds 42-46)
-│   ├── step3_pretrain.sh                # Pre-training (multi-objective)
-│   └── step4_finetune.sh                # Fine-tuning + multi-seed evaluation
-├── requirements.txt
-└── README.md
-```
-
-The package is organized around four stages — **`metagraph/`** (meta-graph construction, the core), **`pretrain`**, **`finetune`**, and **`data_preprocessing/`** — with `conf.py` and `gps_model.py` as shared components. Run any entry point as a module from the repository root, e.g. `python -m magnet.finetune ...` (the provided scripts do this for you).
-
-> Datasets, processed graph pickles, and model checkpoints are **not** tracked in git (see `.gitignore`). Place them under `data/` and `pretrain_model/` as described below.
+<p align="center">
+  <img src="docs/Overview.png" alt="MAGNET framework overview" width="100%">
+</p>
 
 ---
 
 ## Prerequisites
 
-- Python 3.10
-- NVIDIA GPU + CUDA (the paper used CUDA 12.8); CPU works but is slow
-- PyTorch and PyTorch Geometric matching your CUDA version
+| Requirement | Notes |
+|---|---|
+| Python 3.10 | Conda recommended |
+| NVIDIA GPU + CUDA | the paper used CUDA 12.8; CPU works but is slow |
+| PyTorch + PyTorch Geometric | install builds matching your CUDA toolkit |
+
+---
 
 ## Setup
+
+### 1. Environment
 
 ```bash
 git clone https://github.com/sslim-aidrug/MAGNET.git
 cd MAGNET
 
-# 1) Create and activate a conda environment (Python 3.10)
+# create and activate a conda environment
 conda create -n magnet python=3.10 -y
 conda activate magnet
 
-# 2) Install PyTorch for your CUDA toolkit (see https://pytorch.org)
-# 3) Install the remaining dependencies
+# install PyTorch for your CUDA toolkit (https://pytorch.org), then
+# torch-scatter from the matching PyG wheel index, e.g. for torch 2.11 / CUDA 12.8:
+pip install torch-scatter==2.1.2 -f https://data.pyg.org/whl/torch-2.11.0+cu128.html
+
+# remaining dependencies
 pip install -r requirements.txt
 ```
 
-All commands below assume the `magnet` environment is active (`conda activate magnet`).
+The project root defaults to the repository directory; override with
+`--base-dir /path/to/MAGNET` or by exporting `MAGNET_BASE_DIR`. All commands
+below assume the `magnet` environment is active.
 
-By default the project root is the repository directory. Override it with `--base-dir /path/to/MAGNET` or by exporting `MAGNET_BASE_DIR`.
+### 2. Dataset
+
+The **raw inputs** (canonical SMILES + labels) are tracked under `data/raw/`:
+
+```text
+data/raw/
+├── zinc250k.csv              # pre-training corpus (~250K molecules)
+└── moleculenet/              # 10 downstream ADMET benchmarks
+    ├── bbbp.csv  bace.csv  hiv.csv  sider.csv  clintox.csv
+    ├── tox21.csv  toxcast.csv
+    └── esol.csv  freesolv.csv  lipo.csv
+```
+
+These derive from public sources — **MoleculeNet** (<https://moleculenet.org/>)
+and the **ZINC250K** subset of ZINC (via the Junction-Tree VAE repository,
+<https://github.com/wengong-jin/icml18-jtnn>). See `data/raw/README.md` for
+provenance.
+
+Processed meta-graphs, splits, and checkpoints are **large and not tracked in
+git** — they are regenerated from the raw CSVs by the pipeline below and written
+to `data/metagraphs/`, `data/splits/`, and `pretrain_model/`.
 
 ---
 
-## Data & preprocessing
+## Run
 
-The **raw input data** (canonical SMILES + labels) is included under `data/raw/`:
-
-- `data/raw/zinc250k.csv` — pre-training corpus (~250K molecules).
-- `data/raw/moleculenet/{dataset}.csv` — the 10 downstream ADMET benchmarks (BBBP, BACE, HIV, SIDER, ClinTox, Tox21, ToxCast, ESOL, FreeSolv, Lipo).
-
-These derive from public sources — **MoleculeNet** (https://moleculenet.org/) and the **ZINC250K** subset of ZINC (https://zinc.docking.org/, via the Junction Tree VAE repository https://github.com/wengong-jin/icml18-jtnn). See `data/raw/README.md` for provenance.
-
-The `magnet/metagraph/` package fragments molecules (BRICS/JT/Murcko, in `fragmentation.py`), builds the meta-graphs (`graph_builder.py`), and attaches 933D node features (`node_features.py`: 549D RDKit descriptors + 384D ChemBERTa). The resulting **processed graph pickles are large (multi-GB) and are not tracked in git** — they are regenerated from the raw CSVs above and written to:
-
-```
-data/metagraphs/<dataset>_metagraphs.pkl
-data/splits/<dataset>/<dataset>-<split>-<seed>.npz
-```
-
-Node features are 933D (549D RDKit fragment descriptors + a 384D per-fragment ChemBERTa-77M-MTR embedding).
-
-Build the meta-graphs from the raw CSVs, then generate the train/validation/test splits (8:1:1, seeds 42–46, random and balanced-scaffold):
+The pipeline runs in four numbered steps (`scripts/`). Pass a GPU index as the
+first argument.
 
 ```bash
-bash scripts/step1_build_metagraphs.sh 0    # build 933D meta-graphs (GPU 0)
-bash scripts/step2_generate_splits.sh       # generate splits
+# 1) Build 933D meta-graphs from the raw CSVs (ZINC250K + 10 benchmarks)
+bash scripts/step1_build_metagraphs.sh 0
+
+# 2) Generate train/val/test splits (8:1:1, random + balanced-scaffold, seeds 42-46)
+bash scripts/step2_generate_splits.sh
+
+# 3) Pre-train the GraphGPS encoder on ZINC250K (multi-objective loss)
+bash scripts/step3_pretrain.sh 0
+#    -> pretrain_model/pretrained_gps.pt
+
+# 4) Fine-tune on a downstream benchmark over 5 seeds (random + scaffold)
+bash scripts/step4_finetune.sh 0 bbbp
+#    DATASET in {bbbp, bace, hiv, sider, clintox, tox21, toxcast, esol, freesolv, lipo}
 ```
 
-This writes `.npz` index files to `data/splits/`, which the fine-tuning script consumes via `--split-save-dir`.
+Results are reported as **mean ± standard deviation over 5 seeds**. The main
+paper table uses the **random** split; **scaffold**-split results are in the
+Supplementary. Per-dataset hyperparameters are listed in the Supplementary
+(Hyperparameters table); `step4_finetune.sh` ships with BBBP's optimal values
+as an example.
+
+Key options (see `magnet/conf.py`): `--pre-epochs`, `--pre-lr`,
+`--pre-batch-size`, `--node-mask-ratio`, the loss weights `--fg-weight` (α),
+`--property-weight` (β), `--smiles-graph-weight` (γ); and for fine-tuning
+`--split-type {random,scaffold}`, `--dataset-name`, `--finetuning-lr`,
+`--dropout`, `--smiles-proj-dim`, `--gps-lr-ratio`, `--pretrained-path`,
+`--runs`.
 
 ---
 
-## Pre-training
+## Project layout
 
-Pre-train the GraphGPS encoder on the ZINC250K meta-graphs with the multi-objective loss:
-
-```bash
-bash scripts/step3_pretrain.sh 0          # GPU 0
+```text
+MAGNET/
+├── magnet/                          # Python package (run as `python -m magnet.<module>`)
+│   ├── conf.py                      #   argument / path configuration
+│   ├── gps_model.py                 #   GraphGPS encoder (FragmentGPS) + projection heads
+│   ├── metagraph/                   #   ── core: meta-graph construction ──
+│   │   ├── fragmentation.py         #     BRICS / JT / Murcko fragmentation
+│   │   ├── graph_builder.py         #     meta-graph assembly + preprocessing pipeline
+│   │   ├── node_features.py         #     933D node features (549D RDKit + 384D ChemBERTa)
+│   │   └── pos_encoding.py          #     positional / structural encodings
+│   ├── pretrain.py                  #   multi-objective pre-training on ZINC250K
+│   ├── finetune.py                  #   fine-tuning + multi-seed evaluation
+│   └── data_preprocessing/          #   ── data preprocessing ──
+│       ├── random_split.py          #     stratified random 8:1:1 split
+│       └── scaffold_split.py        #     balanced scaffold 8:1:1 split
+├── scripts/                         # step1-4 pipeline (numbered by order)
+│   ├── step1_build_metagraphs.sh
+│   ├── step2_generate_splits.sh
+│   ├── step3_pretrain.sh
+│   └── step4_finetune.sh
+├── data/raw/                        # raw input CSVs (ZINC250K + MoleculeNet); processed data gitignored
+├── requirements.txt
+└── README.md
 ```
-
-Key options (`conf.py`): `--pre-epochs`, `--pre-lr`, `--pre-batch-size`, `--node-mask-ratio`, and the loss weights `--fg-weight` (α, L_GG), `--property-weight` (β, L_P), `--smiles-graph-weight` (γ, L_SG). The pre-trained encoder is saved as a `pretrained_gps.pt` checkpoint.
-
-## Fine-tuning
-
-Fine-tune the pre-trained encoder on a downstream benchmark (5 seeds, mean ± std):
-
-```bash
-bash scripts/step4_finetune.sh 0 bbbp     # GPU 0, BBBP
-```
-
-Useful options: `--split-type {random,scaffold}`, `--dataset-name`, `--finetuning-lr`, `--smiles-proj-dim`, `--dropout`, `--finetuning-weight-decay`, `--pretrained-path`, `--runs`.
-
-## Reproducing the benchmark results
-
-- Datasets are split **8:1:1**. The main paper table uses **random split**; scaffold-split results (5 seeds) are reported in the Supplementary.
-- All experiments are repeated over **5 seeds** and reported as mean ± standard deviation.
-- The full per-dataset hyperparameters are listed in the Supplementary (Hyperparameters table).
 
 ---
 
@@ -158,4 +161,5 @@ Useful options: `--split-type {random,scaffold}`, `--dataset-name`, `--finetunin
 
 ## Contact
 
-Corresponding author: Sangsoo Lim (`sslim@dgu.ac.kr`), Department of Computer Science and Artificial Intelligence, Dongguk University.
+Corresponding author: Sangsoo Lim (`sslim@dgu.ac.kr`), Department of Computer
+Science and Artificial Intelligence, Dongguk University.
