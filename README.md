@@ -14,7 +14,7 @@ pre-training, and ChemBERTa-augmented fine-tuning.*
 ## Overview
 
 <p align="center">
-  <img src="docs/Overview.pdf" alt="MAGNET framework overview" width="100%">
+  <img src="docs/Overview.png" alt="MAGNET framework overview" width="100%">
 </p>
 
 ---
