@@ -6,7 +6,8 @@ processed meta-graph pickles are **not** shipped here and are built from these f
 
 ## Contents
 
-- `zinc250k.csv` — pre-training corpus (~250K molecules).
+- `zinc250k.csv` — pre-training corpus (249,340 molecules; 116 SMILES that overlap with the
+  10 downstream ADMET benchmarks have been removed to prevent train/test leakage).
 - `moleculenet/` — the 10 downstream ADMET benchmarks:
   `bbbp, bace, hiv, sider, clintox, tox21, toxcast, esol, freesolv, lipo`.
 
