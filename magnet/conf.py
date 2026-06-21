@@ -17,7 +17,7 @@ def parse_arguments():
     parser.add_argument('--graph-pkl', type=str, default='', help='Custom output pickle path')
 
     # Model architecture (GPS encoder)
-    parser.add_argument('--node-dim', type=int, default=933, help='Input node feature dimension (549D RDKit + 384D ChemBERTa)')
+    parser.add_argument('--node-dim', type=int, default=932, help='Input node feature dimension (548D RDKit + 384D ChemBERTa)')
     parser.add_argument('--edge-dim', type=int, default=1, help='Edge feature dimension')
     parser.add_argument('--model-dim', type=int, default=256, help='Hidden dimension')
     parser.add_argument('--num-layers', type=int, default=2, help='Number of GPS layers')

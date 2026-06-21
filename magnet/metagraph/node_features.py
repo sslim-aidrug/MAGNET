@@ -1,7 +1,7 @@
 """
 Meta-graph node features.
 
-Each fragment node is 933D: 549D RDKit fragment descriptors (5 PhysChem + 5 Ring
+Each fragment node is 932D: 548D RDKit fragment descriptors (4 PhysChem + 5 Ring
 + 6 Topological + 7 Pharmacophore + 4 Electronic + 10 Element + 512 Morgan)
 concatenated with the 384D ChemBERTa-77M-MTR CLS embedding of the fragment SMILES.
 """
@@ -19,7 +19,7 @@ from transformers import AutoModel, AutoTokenizer
 warnings.filterwarnings('ignore')
 
 MORGAN_DIM = 512
-FEATURE_DIM = 5 + 5 + 6 + 7 + 4 + 10 + MORGAN_DIM
+FEATURE_DIM = 4 + 5 + 6 + 7 + 4 + 10 + MORGAN_DIM
 
 fdefName = os.path.join(RDConfig.RDDataDir, 'BaseFeatures.fdef')
 PHARM_FACTORY = AllChem.BuildFeatureFactory(fdefName)
@@ -28,24 +28,21 @@ PHARM_TYPES = ['Donor', 'Acceptor', 'Aromatic', 'Hydrophobe',
 
 
 def compute_physchem_features(mol):
-    """5D: Physicochemical properties (normalized)"""
+    """4D: Physicochemical properties (normalized)"""
     try:
         mw = Descriptors.MolWt(mol)
-        logp = Descriptors.MolLogP(mol)
         tpsa = Descriptors.TPSA(mol)
         hbd = Descriptors.NumHDonors(mol)
         hba = Descriptors.NumHAcceptors(mol)
 
         mw_norm = min(mw / 500.0, 1.0)
-        logp_norm = (logp + 5.0) / 15.0
-        logp_norm = max(0.0, min(1.0, logp_norm))
         tpsa_norm = min(tpsa / 140.0, 1.0)
         hbd_norm = min(hbd / 5.0, 1.0)
         hba_norm = min(hba / 10.0, 1.0)
 
-        return [mw_norm, logp_norm, tpsa_norm, hbd_norm, hba_norm]
+        return [mw_norm, tpsa_norm, hbd_norm, hba_norm]
     except:
-        return [0.0] * 5
+        return [0.0] * 4
 
 
 def compute_ring_features(mol):
@@ -191,12 +188,12 @@ def compute_enhanced_features(smiles):
 
 
 def GetFragmentFeature(smiles: str) -> List[float]:
-    """549D RDKit feature vector for one fragment SMILES (same for BRICS/JT/Murcko)."""
+    """548D RDKit feature vector for one fragment SMILES (same for BRICS/JT/Murcko)."""
     return compute_enhanced_features(smiles)
 
 
 def smiles_to_fragment_features(smiles_list, device=None):
-    """Compute the 549D RDKit fragment features for a list of SMILES -> tensor [N, 549]."""
+    """Compute the 548D RDKit fragment features for a list of SMILES -> tensor [N, 548]."""
     vectors = []
     print(f"Creating fragment feature vectors: {len(smiles_list)} fragments")
     for smiles in smiles_list:
@@ -210,7 +207,7 @@ def smiles_to_fragment_features(smiles_list, device=None):
 # --- ChemBERTa-2 per-fragment embedding (384D) ---
 CHEMBERTA_MODEL_NAME = "DeepChem/ChemBERTa-77M-MTR"
 CHEMBERTA_DIM = 384
-NODE_FEATURE_DIM = FEATURE_DIM + CHEMBERTA_DIM   # 549 + 384 = 933
+NODE_FEATURE_DIM = FEATURE_DIM + CHEMBERTA_DIM   # 548 + 384 = 932
 
 _chemberta_cache = {}
 
@@ -244,7 +241,7 @@ def chemberta_cls_embeddings(smiles_list, model_name=CHEMBERTA_MODEL_NAME, batch
 
 def smiles_to_vector(smiles_list, batch_size=256, device=None, output_dim=None):
     """
-    Per-fragment node features (933D): 549D RDKit fragment descriptors concatenated
+    Per-fragment node features (932D): 548D RDKit fragment descriptors concatenated
     with the 384D ChemBERTa-77M-MTR CLS embedding of the fragment SMILES.
     """
     rdkit_features = smiles_to_fragment_features(smiles_list, device=None)

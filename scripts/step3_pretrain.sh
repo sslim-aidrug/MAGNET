@@ -14,7 +14,7 @@ cd "$SCRIPT_DIR/.."              # repository root, so `python -m magnet...` res
 python -m magnet.pretrain \
     --gpu "$GPU" \
     --pre-graph-pkl "data/metagraphs/zinc250k_metagraphs.pkl" \
-    --node-dim 933 \
+    --node-dim 932 \
     --model-dim 256 --num-layers 2 --num-heads 4 --dropout 0.1 \
     --proj-hidden-dim 256 --proj-out-dim 128 \
     --chemberta-model-name DeepChem/ChemBERTa-77M-MTR \

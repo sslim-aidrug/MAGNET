@@ -20,7 +20,7 @@ cd "$SCRIPT_DIR/.."              # repository root, so `python -m magnet...` res
 echo "===== [random] ${DATASET} ====="
 python -m magnet.finetune \
     --split-type random --dataset-name "$DATASET" --gpu "$GPU" \
-    --smiles-feature-type concat_all --node-dim 933 \
+    --smiles-feature-type concat_all --node-dim 932 \
     --chemberta-model-name DeepChem/ChemBERTa-77M-MTR \
     --pretrained-path pretrain_model/pretrained_gps.pt \
     --split-save-dir data/splits \
@@ -34,7 +34,7 @@ python -m magnet.finetune \
 echo "===== [scaffold] ${DATASET} ====="
 python -m magnet.finetune \
     --split-type scaffold --dataset-name "$DATASET" --gpu "$GPU" \
-    --smiles-feature-type concat_all --node-dim 933 \
+    --smiles-feature-type concat_all --node-dim 932 \
     --chemberta-model-name DeepChem/ChemBERTa-77M-MTR \
     --pretrained-path pretrain_model/pretrained_gps.pt \
     --split-save-dir data/splits \

@@ -6,7 +6,7 @@ After all runs complete, saves the model state_dict from the run with the best t
 
 Usage:
     python finetune_unified_chemberta2_ckpt.py --dataset-name BBBP --smiles-feature-type concat_all \
-        --node-dim 933 --chemberta-model-name DeepChem/ChemBERTa-77M-MTR --pretrained-path <path> \
+        --node-dim 932 --chemberta-model-name DeepChem/ChemBERTa-77M-MTR --pretrained-path <path> \
         --save-checkpoint-dir <dir>
 """
 
@@ -40,17 +40,17 @@ warnings.filterwarnings('ignore')
 
 
 SMILES_DIM_MAP = {
-    'concat_all': 933,
+    'concat_all': 932,
 }
 
 
 # --- SMILES feature embedders (concatenated with the graph embedding at fine-tuning) ---
 class FullConcatEmbedder:
-    """Full concat embedding: 549D Morgan + ChemBERTa (dynamic) = dynamic total"""
+    """Full concat embedding: 548D Morgan + ChemBERTa (dynamic) = dynamic total"""
 
     def __init__(self, model_name="seyonec/ChemBERTa-zinc-base-v1", device="cuda"):
         self.device = device
-        self.morgan_dim = 549
+        self.morgan_dim = 548
         from transformers import AutoTokenizer, AutoModel
         from magnet.metagraph.node_features import compute_enhanced_features
         self.compute_features = compute_enhanced_features
@@ -159,7 +159,7 @@ class GPSForFinetuning(nn.Module):
     """
     GPS encoder fused with SMILES features via cross-attention.
     The graph embedding (256D) is combined with concatenated Morgan+ChemBERTa
-    SMILES features (933D) for a 1189D prediction-head input.
+    SMILES features (932D) for a 1188D prediction-head input.
     """
 
     def __init__(self, node_dim=182, hidden_dim=256, smiles_dim=0, num_layers=2,

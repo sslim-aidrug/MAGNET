@@ -103,7 +103,7 @@ def load_pickle(pkl_path):
 
 
 PROPERTY_NAMES = [
-    'MolWt', 'LogP', 'TPSA', 'NumHDonors', 'NumHAcceptors', 'NumRotatableBonds',
+    'MolWt', 'TPSA', 'NumHDonors', 'NumHAcceptors', 'NumRotatableBonds',
     'NumAromaticRings', 'NumAliphaticRings', 'RingCount', 'NumSaturatedRings',
     'HeavyAtomCount', 'NumHeteroatoms', 'FractionCSP3',
     'BertzCT', 'HallKierAlpha',
@@ -116,7 +116,7 @@ NUM_PROPERTIES = len(PROPERTY_NAMES)
 def compute_rdkit_descriptors(smiles):
     """
     Compute RDKit descriptors for a SMILES string.
-    Returns a tensor of normalized descriptors (20 properties).
+    Returns a tensor of normalized descriptors (19 properties).
     """
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
@@ -126,7 +126,6 @@ def compute_rdkit_descriptors(smiles):
 
         descriptors = [
             Descriptors.MolWt(mol),
-            Descriptors.MolLogP(mol),
             Descriptors.TPSA(mol),
             Descriptors.NumHDonors(mol),
             Descriptors.NumHAcceptors(mol),
