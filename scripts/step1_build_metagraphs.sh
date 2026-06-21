@@ -2,8 +2,8 @@
 # Build meta-graphs from the raw SMILES CSVs (pipeline step 1).
 #
 # magnet/metagraph/graph_builder.py runs the full pipeline per dataset:
-#   fragmentation (BRICS/JT/Murcko) -> meta-graph assembly -> 933D node features
-#   (549D RDKit + 384D ChemBERTa-77M-MTR) -> GPS-format graphs with positional encoding.
+#   fragmentation (BRICS/JT/Murcko) -> meta-graph assembly -> 932D node features
+#   (548D RDKit + 384D ChemBERTa-77M-MTR) -> GPS-format graphs with positional encoding.
 #
 # Output: data/metagraphs/<dataset>_metagraphs.pkl
 #
