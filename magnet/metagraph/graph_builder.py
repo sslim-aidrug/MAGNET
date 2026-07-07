@@ -4,7 +4,7 @@ Meta-graph construction and the full preprocessing pipeline.
 Takes the BRICS/JT/Murcko fragment views (from fragmentation.py), merges them into a
 unified meta-graph (nodes = fragments merged by atom-index identity; edges connect
 overlapping fragments from different views, weighted by the shared-atom fraction),
-attaches 933D node features (node_features.py: 549D RDKit + 384D ChemBERTa), and emits
+attaches 932D node features (node_features.py: 548D RDKit + 384D ChemBERTa), and emits
 GPS-format graphs with positional encoding (pos_encoding.py).
 """
 import os
@@ -320,7 +320,7 @@ def create_graphs_with_adjacency(graph_data, frag_dict_list, final_graph, vector
     Build graphs in GPS format (with Laplacian PE and degree encoding).
 
     Output Data format:
-        x: [N, 933] - node features (549D RDKit descriptors: 5 physchem + 5 ring + 6 topo + 7 pharm + 4 electronic + 10 element + 512 Morgan; + 384D ChemBERTa-77M-MTR CLS)
+        x: [N, 932] - node features (548D RDKit descriptors: 4 physchem + 5 ring + 6 topo + 7 pharm + 4 electronic + 10 element + 512 Morgan; + 384D ChemBERTa-77M-MTR CLS)
         edge_index: [2, E] - sparse edge connections
         edge_attr: [E, 1] - edge weights (overlap)
         pe: [N, max_freqs] - Laplacian positional encoding
@@ -435,7 +435,7 @@ def preprocessing(df, dataset_name=''):
     # 7) Assemble the meta-graph per molecule
     final_graphs = [Create_Final_Graph(tagged_smiles_dict_list[data], merge_combine_all_overlap_weights[data]) for data in range(len(filtered_data))]
 
-    # 8) Compute 549D node features for every unique fragment
+    # 8) Compute 932D node features for every unique fragment (548D RDKit + 384D chemical language model)
     all_frag_dataset = list(brics_all_frag|murcko_all_frag|jt_all_frag)
     vectors = smiles_to_vector(all_frag_dataset)
     smiles_to_vectors = {smiles: vec for smiles, vec in zip(all_frag_dataset, vectors)}

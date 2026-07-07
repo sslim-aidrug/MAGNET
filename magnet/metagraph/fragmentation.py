@@ -278,10 +278,92 @@ def process_junction_tree_decomposition(data):
 
     return jt_error_indices, jt_all_frag, jt_indices, jt_mols, bonds_to_break_jt
 
-# --- Fragmentation: BRICS (retrosynthetic bond cleavage) ---
+# --- Fragmentation: BRICS (retrosynthetic bond cleavage) + HiMol (fused-ring decomposition) ---
+
+def get_minimum_rings(mol):
+    """Get minimum ring (SSSR) atom-index lists for a molecule."""
+    ring_info = mol.GetRingInfo()
+    return [list(ring) for ring in ring_info.AtomRings()]
+
+
+def is_fused_ring_fragment(mol):
+    """Return True if the fragment contains fused rings (>=2 rings sharing >=2 atoms)."""
+    ring_info = mol.GetRingInfo()
+    rings = ring_info.AtomRings()
+
+    if len(rings) <= 1:
+        return False
+
+    for i, ring1 in enumerate(rings):
+        for j, ring2 in enumerate(rings):
+            if i < j:
+                shared = set(ring1) & set(ring2)
+                if len(shared) >= 2:
+                    return True
+    return False
+
+
+def decompose_fused_rings_himol(frag_mol, original_atom_map):
+    """HiMol rule: decompose a fused-ring fragment into its minimum rings + linker atoms.
+
+    Args:
+        frag_mol: fragment molecule (may contain fused rings).
+        original_atom_map: mapping from fragment atom index to original atom-map number.
+
+    Returns:
+        List of (atom_indices, mol) tuples for each minimum ring plus a non-ring linker piece.
+    """
+    ring_info = frag_mol.GetRingInfo()
+    rings = ring_info.AtomRings()
+
+    if len(rings) <= 1:
+        indices = [original_atom_map[atom.GetIdx()] for atom in frag_mol.GetAtoms()]
+        return [(indices, frag_mol)]
+
+    results = []
+    ring_atoms_all = set()
+
+    for ring in rings:
+        ring_set = set(ring)
+        ring_atoms_all.update(ring_set)
+
+        ring_indices = [original_atom_map[idx] for idx in ring]
+
+        try:
+            edit_mol = RWMol(Chem.MolFromSmiles(''))
+            atom_to_new = {}
+            for idx in ring:
+                atom = frag_mol.GetAtomWithIdx(idx)
+                new_idx = edit_mol.AddAtom(Chem.Atom(atom.GetAtomicNum()))
+                edit_mol.GetAtomWithIdx(new_idx).SetAtomMapNum(original_atom_map[idx])
+                atom_to_new[idx] = new_idx
+
+            for bond in frag_mol.GetBonds():
+                begin_idx = bond.GetBeginAtomIdx()
+                end_idx = bond.GetEndAtomIdx()
+                if begin_idx in ring_set and end_idx in ring_set:
+                    edit_mol.AddBond(atom_to_new[begin_idx], atom_to_new[end_idx], bond.GetBondType())
+
+            ring_mol = edit_mol.GetMol()
+            results.append((ring_indices, ring_mol))
+        except Exception:
+            results.append((ring_indices, None))
+
+    all_atoms = set(range(frag_mol.GetNumAtoms()))
+    non_ring_atoms = all_atoms - ring_atoms_all
+
+    if non_ring_atoms:
+        non_ring_indices = [original_atom_map[idx] for idx in non_ring_atoms]
+        if len(non_ring_indices) > 0:
+            results.append((non_ring_indices, None))
+
+    return results
+
+
 def brics_decompose(mol):
     """
-    BRICS decomposition: break retrosynthetically meaningful bonds.
+    BRICS + HiMol decomposition: break retrosynthetically meaningful bonds,
+    then decompose any remaining fused-ring fragments into minimum rings.
 
     Returns:
         (atom-index lists per fragment, fragment mols, broken BRICS bonds)
@@ -295,12 +377,25 @@ def brics_decompose(mol):
         rw_mol_brics.RemoveBond(atom1, atom2)
 
     brics_fragments = Chem.GetMolFrags(rw_mol_brics, asMols=True, sanitizeFrags=False)
+
     brics_fragment_indices = []
     brics_mols = []
+
     for frag in brics_fragments:
-        indices = [atom.GetAtomMapNum() for atom in frag.GetAtoms()]
-        brics_fragment_indices.append(indices)
-        brics_mols.append(frag)
+        original_atom_map = {atom.GetIdx(): atom.GetAtomMapNum() for atom in frag.GetAtoms()}
+
+        if is_fused_ring_fragment(frag):
+            himol_results = decompose_fused_rings_himol(frag, original_atom_map)
+            for indices, ring_mol in himol_results:
+                brics_fragment_indices.append(indices)
+                if ring_mol is not None:
+                    brics_mols.append(ring_mol)
+                else:
+                    brics_mols.append(frag)
+        else:
+            indices = [atom.GetAtomMapNum() for atom in frag.GetAtoms()]
+            brics_fragment_indices.append(indices)
+            brics_mols.append(frag)
 
     return brics_fragment_indices, brics_mols, bonds_to_break_brics
 

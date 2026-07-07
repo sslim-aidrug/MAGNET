@@ -135,19 +135,12 @@ def get_conf():
 
     args.data_dir = args.base_dir / "data"
 
-    args.pre_graph_dir = args.data_dir / "zinc250k_data"
+    args.graph_dir = args.data_dir / "metagraphs"
+
     if args.pre_graph_pkl:
         args.pre_graph_pkl = Path(args.pre_graph_pkl)
-    elif args.node_dim == 1317:
-        args.pre_graph_pkl = args.pre_graph_dir / "zinc250k_graphs_himol_1317D.pkl"
-    elif args.node_dim == 549:
-        args.pre_graph_pkl = args.pre_graph_dir / "zinc250k_graphs_gps_enhanced_549d.pkl"
-    elif args.node_dim == 2063:
-        args.pre_graph_pkl = args.pre_graph_dir / "zinc250k_graphs_gps_morgan.pkl"
     else:
-        args.pre_graph_pkl = args.pre_graph_dir / "normalized_zinc250k_graphs_gps_182d.pkl"
-
-    args.graph_dir = args.data_dir / "metagraphs"
+        args.pre_graph_pkl = args.graph_dir / "zinc250k_metagraphs.pkl"
     if args.split_save_dir is None:
         args.split_save_dir = args.data_dir / "splits"
     else:

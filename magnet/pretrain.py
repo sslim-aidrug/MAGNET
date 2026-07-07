@@ -6,7 +6,7 @@ Pretrain on ZINC250K with:
 3. SMILES-Graph Contrastive learning (cross-modal alignment)
 
 SMILES Encoder: ChemBERTa-77M-MTR (DeepChem/ChemBERTa-77M-MTR)
-Node Features: 549D (Morgan+PhysChem) + 384D (ChemBERTa-77M-MTR) = 933D
+Node Features: 548D (Morgan+PhysChem) + 384D (ChemBERTa-77M-MTR) = 932D
 """
 
 import os
@@ -397,7 +397,7 @@ def train_epoch(model, loader, optimizer, contrastive_loss_fn, property_loss_fn,
         property_target = original.rdkit_props.view(-1, NUM_PROPERTIES).to(device)
         property_loss = property_loss_fn(property_pred, property_target)
 
-        # L_SG: align graph embedding with the frozen ChemBERTa SMILES embedding
+        # L_SG: align graph embedding with the frozen chemical language model SMILES embedding
         smiles_graph_loss = torch.tensor(0.0, device=device)
         if smiles_encoder is not None and smiles_graph_loss_fn is not None:
             valid_indices = [i for i, s in enumerate(smiles_list) if s is not None]
@@ -465,7 +465,7 @@ def validate(model, loader, contrastive_loss_fn, property_loss_fn, device, prope
         property_target = original.rdkit_props.view(-1, NUM_PROPERTIES).to(device)
         property_loss = property_loss_fn(property_pred, property_target)
 
-        # L_SG: align graph embedding with the frozen ChemBERTa SMILES embedding
+        # L_SG: align graph embedding with the frozen chemical language model SMILES embedding
         smiles_graph_loss = torch.tensor(0.0, device=device)
         if smiles_encoder is not None and smiles_graph_loss_fn is not None:
             valid_indices = [i for i, s in enumerate(smiles_list) if s is not None]
