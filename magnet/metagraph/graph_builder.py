@@ -249,7 +249,9 @@ def merge_node_dictionary(frag_dict):
 
 def merge_weights(combine_all_overlap_weights, dict_list, verbose=False):
     """Rebuild the weight matrix after node merging: a merged node takes the
-    averaged incoming weights and the shared outgoing weights of its source fragments."""
+    averaged outgoing weights (rows) of its source fragments and the incoming
+    weights (column) of its first source fragment in BRICS, JT, Murcko order."""
+    
     tag_idx = list(dict_list.keys())
     original_idx = list(combine_all_overlap_weights.keys())
 
