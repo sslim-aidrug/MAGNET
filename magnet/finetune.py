@@ -48,7 +48,7 @@ SMILES_DIM_MAP = {
 class FullConcatEmbedder:
     """Full concat embedding: 548D Morgan + ChemBERTa (dynamic) = dynamic total"""
 
-    def __init__(self, model_name="seyonec/ChemBERTa-zinc-base-v1", device="cuda"):
+    def __init__(self, model_name="DeepChem/ChemBERTa-77M-MTR", device="cuda"):
         self.device = device
         self.morgan_dim = 548
         from transformers import AutoTokenizer, AutoModel

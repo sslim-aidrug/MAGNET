@@ -70,7 +70,7 @@ def parse_arguments():
     parser.add_argument('--smiles-feature-type', type=str, default='concat_all',
                         choices=['concat_all'],
                         help='SMILES feature concatenated with the graph embedding (Morgan + ChemBERTa)')
-    parser.add_argument('--chemberta-model-name', type=str, default='seyonec/ChemBERTa-zinc-base-v1',
+    parser.add_argument('--chemberta-model-name', type=str, default='DeepChem/ChemBERTa-77M-MTR',
                         help='ChemBERTa model name for transformer-based embeddings')
     parser.add_argument('--chemberta-batch-size', type=int, default=64,
                         help='Batch size for ChemBERTa embedding generation')
